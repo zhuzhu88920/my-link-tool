@@ -3,95 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>链接混淆工具 - 页面1</title>
+    <title>链接处理工具 - 页面1</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .pill { cursor: pointer; transition: all 0.2s; }
+        .pill-active { background-color: #ebf5ff; border-color: #3b82f6; color: #3b82f6; }
+    </style>
 </head>
-<body class="bg-gray-50 p-8 text-sm">
+<body class="bg-gray-50 p-8">
     <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h2 class="text-xl font-bold mb-4">1. 粘贴原始数据</h2>
-        <textarea id="inputText" class="w-full h-32 p-3 border rounded-lg mb-4" placeholder="粘贴演示数据..."></textarea>
+        <h2 class="text-xl font-bold mb-4 text-gray-800">1. 粘贴演示数据</h2>
+        <textarea id="inputText" class="w-full h-32 p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="请在此粘贴三行演示数据..."></textarea>
         
         <div class="flex gap-4 mb-8">
-            <button onclick="pasteFromClipboard()" class="px-4 py-2 bg-blue-600 text-white rounded">从剪贴板粘贴</button>
+            <button onclick="pasteFromClipboard()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">从剪贴板粘贴</button>
+            <button onclick="clearData()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">清空</button>
         </div>
 
-        <h2 class="text-xl font-bold mb-4">2. 配置插入字符</h2>
-        <div id="selectedChars" class="flex flex-wrap gap-2 mb-2 min-h-[30px]"></div>
-        <div class="flex flex-wrap gap-2 mb-8" id="charPool">
-            <!-- 点击这些字符会加入待选列表 -->
-            <button onclick="toggleChar('💙')" class="px-3 py-1 border rounded-full hover:bg-blue-50">💙</button>
-            <button onclick="toggleChar('⭐')" class="px-3 py-1 border rounded-full hover:bg-blue-50">⭐</button>
-            <button onclick="toggleChar('上岸')" class="px-3 py-1 border rounded-full hover:bg-blue-50">上岸</button>
-            <button onclick="toggleChar('成功')" class="px-3 py-1 border rounded-full hover:bg-blue-50">成功</button>
-            <button onclick="toggleChar('好好学习')" class="px-3 py-1 border rounded-full hover:bg-blue-50">好好学习</button>
-            <button onclick="toggleChar('加油')" class="px-3 py-1 border rounded-full hover:bg-blue-50">加油</button>
+        <h2 class="text-xl font-bold mb-4 text-gray-800">2. 配置插入字符</h2>
+        <div class="border border-gray-200 p-4 rounded-lg mb-4">
+            <div id="selectedChars" class="flex flex-wrap gap-2 mb-4 min-h-[40px] items-center">
+                <!-- 选中的字符显示在这里 -->
+            </div>
+            <div class="flex flex-wrap gap-2" id="charPool">
+                <!-- 预设选项 -->
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('💙')">💙</span>
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('⭐')">⭐</span>
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('🎯')">🎯</span>
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('🔥')">🔥</span>
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('上岸')">上岸</span>
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('成功')">成功</span>
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('好好学习')">好好学习</span>
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('加油')">加油</span>
+                <span class="pill px-3 py-1 border border-gray-300 rounded-full text-sm" onclick="toggleChar('冲鸭')">冲鸭</span>
+            </div>
         </div>
 
-        <div class="flex gap-4 mb-8">
-            <button onclick="processLinks()" class="px-6 py-2 bg-purple-600 text-white rounded">点击插入 (随机2-4个)</button>
-            <button id="importBtn" onclick="importToCloud()" class="px-6 py-2 bg-green-600 text-white rounded opacity-50" disabled>导入云端数据库</button>
-            <a href="list.html" class="px-6 py-2 border rounded">查看页面2</a>
+        <div class="flex gap-4">
+            <button onclick="processLinks()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">插入按钮 (随机2-4个)</button>
+            <button onclick="importToPage2()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">导入到页面2</button>
+            <a href="list.html" class="px-6 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 flex items-center">查看页面2</a>
         </div>
 
-        <div id="preview" class="hidden border rounded p-4 bg-gray-50">
-            <h3 class="font-bold mb-2">生成预览：</h3>
-            <div id="previewContent"></div>
+        <div id="previewArea" class="mt-8 hidden">
+            <h3 class="font-bold mb-2">处理预览:</h3>
+            <div class="overflow-x-auto border rounded-lg">
+                <table class="w-full text-left text-sm" id="previewTable">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-2 border-b">简称</th>
+                            <th class="p-2 border-b">标题</th>
+                            <th class="p-2 border-b">原始链接</th>
+                            <th class="p-2 border-b">处理后链接</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
         let selectedChars = [];
-        let resultData = [];
+        let processedData = [];
 
-        function toggleChar(c) {
-            if (!selectedChars.includes(c)) selectedChars.push(c);
-            else selectedChars = selectedChars.filter(i => i !== c);
-            document.getElementById('selectedChars').innerHTML = selectedChars.map(i => `<span class="bg-blue-100 px-2 py-1 rounded">${i}</span>`).join(' ');
+        function toggleChar(char) {
+            const idx = selectedChars.indexOf(char);
+            if (idx > -1) {
+                selectedChars.splice(idx, 1);
+            } else {
+                selectedChars.push(char);
+            }
+            renderSelected();
+        }
+
+        function renderSelected() {
+            const container = document.getElementById('selectedChars');
+            container.innerHTML = selectedChars.map(c => 
+                `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">${c}</span>`
+            ).join('');
         }
 
         async function pasteFromClipboard() {
-            document.getElementById('inputText').value = await navigator.clipboard.readText();
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('inputText').value = text;
+            } catch (err) {
+                alert('剪贴板权限被拒绝，请手动粘贴');
+            }
         }
 
         function processLinks() {
-            const raw = document.getElementById('inputText').value.trim();
-            if(!raw || selectedChars.length === 0) return alert('请先输入数据并选择字符');
-            
-            resultData = raw.split('\n').map(line => {
-                const parts = line.split(/\s+/);
-                const name = parts[0];
-                const url = parts[parts.length - 1];
-                const title = parts.slice(1, -1).join(' ');
-                
-                // 混淆逻辑：随机位置插入2-4个
-                let mUrl = url;
-                const count = Math.floor(Math.random() * 3) + 2;
-                for(let i=0; i<count; i++) {
-                    const char = selectedChars[Math.floor(Math.random()*selectedChars.length)];
-                    const pos = Math.floor(Math.random() * (mUrl.length - 8)) + 8; // 避开 https://
-                    mUrl = mUrl.slice(0, pos) + char + mUrl.slice(pos);
-                }
-                return { name, title, originalLink: url, modifiedLink: mUrl };
-            });
+            const text = document.getElementById('inputText').value.trim();
+            if (!text) return alert('请先输入数据');
+            if (selectedChars.length === 0) return alert('请先配置插入字符');
 
-            document.getElementById('previewContent').innerText = JSON.stringify(resultData, null, 2);
-            document.getElementById('preview').classList.remove('hidden');
-            document.getElementById('importBtn').disabled = false;
-            document.getElementById('importBtn').classList.remove('opacity-50');
+            const lines = text.split('\n');
+            processedData = lines.map(line => {
+                const cols = line.split(/\s+/); // 按空格或制表符分割
+                if (cols.length < 3) return null;
+                
+                const name = cols[0];
+                const originalLink = cols[cols.length - 1];
+                const title = cols.slice(1, cols.length - 1).join(' ');
+                
+                return { name, title, originalLink, modifiedLink: injectChars(originalLink) };
+            }).filter(i => i);
+
+            renderPreview();
         }
 
-        async function importToCloud() {
-            const btn = document.getElementById('importBtn');
-            btn.innerText = '正在导入...';
-            try {
-                const res = await fetch('/api/data', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(resultData)
-                });
-                if(res.ok) alert('同步成功！');
-            } catch(e) { alert('失败：' + e.message); }
-            btn.innerText = '导入云端数据库';
+        function injectChars(url) {
+            let newUrl = url;
+            const count = Math.floor(Math.random() * 3) + 2; // 2-4个
+            for (let i = 0; i < count; i++) {
+                const char = selectedChars[Math.floor(Math.random() * selectedChars.length)];
+                // 随机插入位置（避开协议头 http:// 或 https://）
+                const startPos = url.includes('://') ? url.indexOf('://') + 3 : 0;
+                const pos = Math.floor(Math.random() * (newUrl.length - startPos)) + startPos;
+                newUrl = newUrl.slice(0, pos) + char + newUrl.slice(pos);
+            }
+            return newUrl;
+        }
+
+        function renderPreview() {
+            const tableBody = document.querySelector('#previewTable tbody');
+            tableBody.innerHTML = processedData.map(item => `
+                <tr>
+                    <td class="p-2 border-b">${item.name}</td>
+                    <td class="p-2 border-b truncate max-w-xs">${item.title}</td>
+                    <td class="p-2 border-b text-blue-500">${item.originalLink}</td>
+                    <td class="p-2 border-b text-purple-600 font-bold">${item.modifiedLink}</td>
+                </tr>
+            `).join('');
+            document.getElementById('previewArea').classList.remove('hidden');
+        }
+
+        function importToPage2() {
+            if (processedData.length === 0) return alert('请先点击插入按钮生成数据');
+            
+            const existingData = JSON.parse(localStorage.getItem('my_shared_data') || '[]');
+            const newData = [...existingData, ...processedData];
+            localStorage.setItem('my_shared_data', JSON.stringify(newData));
+            
+            alert('导入成功！已追加到页面2');
+        }
+
+        function clearData() {
+            document.getElementById('inputText').value = '';
+            processedData = [];
+            document.getElementById('previewArea').classList.add('hidden');
         }
     </script>
 </body>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>链接混淆工具 - 页面1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8 text-sm">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-xl font-bold mb-4">1. 粘贴原始数据</h2>
+        <textarea id="inputText" class="w-full h-32 p-3 border rounded-lg mb-4" placeholder="粘贴演示数据..."></textarea>
+        
+        <div class="flex gap-4 mb-8">
+            <button onclick="pasteFromClipboard()" class="px-4 py-2 bg-blue-600 text-white rounded">从剪贴板粘贴</button>
+        </div>
+
+        <h2 class="text-xl font-bold mb-4">2. 配置插入字符</h2>
+        <div id="selectedChars" class="flex flex-wrap gap-2 mb-2 min-h-[30px]"></div>
+        <div class="flex flex-wrap gap-2 mb-8" id="charPool">
+            <!-- 点击这些字符会加入待选列表 -->
+            <button onclick="toggleChar('💙')" class="px-3 py-1 border rounded-full hover:bg-blue-50">💙</button>
+            <button onclick="toggleChar('⭐')" class="px-3 py-1 border rounded-full hover:bg-blue-50">⭐</button>
+            <button onclick="toggleChar('上岸')" class="px-3 py-1 border rounded-full hover:bg-blue-50">上岸</button>
+            <button onclick="toggleChar('成功')" class="px-3 py-1 border rounded-full hover:bg-blue-50">成功</button>
+            <button onclick="toggleChar('好好学习')" class="px-3 py-1 border rounded-full hover:bg-blue-50">好好学习</button>
+            <button onclick="toggleChar('加油')" class="px-3 py-1 border rounded-full hover:bg-blue-50">加油</button>
+        </div>
+
+        <div class="flex gap-4 mb-8">
+            <button onclick="processLinks()" class="px-6 py-2 bg-purple-600 text-white rounded">点击插入 (随机2-4个)</button>
+            <button id="importBtn" onclick="importToCloud()" class="px-6 py-2 bg-green-600 text-white rounded opacity-50" disabled>导入云端数据库</button>
+            <a href="list.html" class="px-6 py-2 border rounded">查看页面2</a>
+        </div>
+
+        <div id="preview" class="hidden border rounded p-4 bg-gray-50">
+            <h3 class="font-bold mb-2">生成预览：</h3>
+            <div id="previewContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedChars = [];
+        let resultData = [];
+
+        function toggleChar(c) {
+            if (!selectedChars.includes(c)) selectedChars.push(c);
+            else selectedChars = selectedChars.filter(i => i !== c);
+            document.getElementById('selectedChars').innerHTML = selectedChars.map(i => `<span class="bg-blue-100 px-2 py-1 rounded">${i}</span>`).join(' ');
+        }
+
+        async function pasteFromClipboard() {
+            document.getElementById('inputText').value = await navigator.clipboard.readText();
+        }
+
+        function processLinks() {
+            const raw = document.getElementById('inputText').value.trim();
+            if(!raw || selectedChars.length === 0) return alert('请先输入数据并选择字符');
+            
+            resultData = raw.split('\n').map(line => {
+                const parts = line.split(/\s+/);
+                const name = parts[0];
+                const url = parts[parts.length - 1];
+                const title = parts.slice(1, -1).join(' ');
+                
+                // 混淆逻辑：随机位置插入2-4个
+                let mUrl = url;
+                const count = Math.floor(Math.random() * 3) + 2;
+                for(let i=0; i<count; i++) {
+                    const char = selectedChars[Math.floor(Math.random()*selectedChars.length)];
+                    const pos = Math.floor(Math.random() * (mUrl.length - 8)) + 8; // 避开 https://
+                    mUrl = mUrl.slice(0, pos) + char + mUrl.slice(pos);
+                }
+                return { name, title, originalLink: url, modifiedLink: mUrl };
+            });
+
+            document.getElementById('previewContent').innerText = JSON.stringify(resultData, null, 2);
+            document.getElementById('preview').classList.remove('hidden');
+            document.getElementById('importBtn').disabled = false;
+            document.getElementById('importBtn').classList.remove('opacity-50');
+        }
+
+        async function importToCloud() {
+            const btn = document.getElementById('importBtn');
+            btn.innerText = '正在导入...';
+            try {
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(resultData)
+                });
+                if(res.ok) alert('同步成功！');
+            } catch(e) { alert('失败：' + e.message); }
+            btn.innerText = '导入云端数据库';
+        }
+    </script>
+</body>
+</html>
