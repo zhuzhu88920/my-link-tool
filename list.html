@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>资源列表 - 页面2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="p-6 flex justify-between bg-indigo-600 text-white">
+            <h1 class="text-xl font-bold">已保存的资源链接</h1>
+            <div class="flex gap-2">
+                <button onclick="clearData()" class="text-sm bg-red-500 px-3 py-1 rounded">清空数据库</button>
+                <a href="index.html" class="text-sm bg-white text-indigo-600 px-3 py-1 rounded">返回添加</a>
+            </div>
+        </div>
+        <table class="w-full text-left">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="p-4">简称</th>
+                    <th class="p-4">商品标题</th>
+                    <th class="p-4">原始链接</th>
+                    <th class="p-4">带Emoji链接</th>
+                </tr>
+            </thead>
+            <tbody id="listBody"></tbody>
+        </table>
+    </div>
+    <script>
+        async function load() {
+            const res = await fetch('/api/data');
+            const data = await res.json();
+            document.getElementById('listBody').innerHTML = data.map(item => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-4 font-bold">${item.name}</td>
+                    <td class="p-4 text-gray-600 text-xs">${item.title}</td>
+                    <td class="p-4"><button onclick="copy('${item.originalLink}')" class="text-blue-500">复制原始</button></td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-indigo-600 font-mono">${item.modifiedLink.substring(0,30)}...</span>
+                            <button onclick="copy('${item.modifiedLink}')" class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-xs">复制混淆链</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        function copy(t) { navigator.clipboard.writeText(t); alert('已复制'); }
+        async function clearData() {
+            if(confirm('确定清空？')) {
+                await fetch('/api/data', {method: 'DELETE'});
+                load();
+            }
+        }
+        load();
+    </script>
+</body>
+</html>
